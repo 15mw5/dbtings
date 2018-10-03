@@ -1,21 +1,21 @@
+import cassandra
+import time
+import ssl
 from cassandra.auth import PlainTextAuthProvider
 import config as cfg
 from cassandra.query import BatchStatement, SimpleStatement
 from prettytable import PrettyTable
-import time
-import ssl
-import cassandra
 from cassandra.cluster import Cluster
 from cassandra.policies import *
 from ssl import PROTOCOL_TLSv1_2
 from requests.utils import DEFAULT_CA_BUNDLE_PATH
 import numpy as np
 
-def PrintTable(rows):
-    t = PrettyTable(['UserID', 'Name', 'City'])
-    for r in rows:
-        t.add_row([r.user_id, r.user_name, r.user_bcity])
-    print(t)
+# def PrintTable(rows):
+#     t = PrettyTable(['UserID', 'Name', 'City'])
+#     for r in rows:
+#         t.add_row([r.user_id, r.user_name, r.user_bcity])
+#     print(t)
 
 ssl_opts = {
             'ca_certs': DEFAULT_CA_BUNDLE_PATH,
@@ -36,29 +36,36 @@ print("session connected")
 
 
 print("\nCreating Keyspace")
-session.execute('CREATE KEYSPACE IF NOT EXISTS movie_stuff WITH replication = {\'class\': \'simpleStrategy\', \'datacenter\' : \'1\' }');
+session.execute('CREATE KEYSPACE IF NOT EXISTS movie_stuff WITH replication = {\'class\': \'simpleStrategy\', \'datacenter\' : \'1\' }')
 #NetowrkTopologyStrategy specifies how many replicas are wanted in each datacenter
 #simpleStrategy (use for a single datacenter and one rack) ???
 print ("\nCreating Table")
-session.execute('CREATE TABLE IF NOT EXISTS movie_stuff.ratings (user_id int PRIMARY KEY, item_id int, rating int, date int)');
+session.execute('CREATE TABLE IF NOT EXISTS movie_stuff.ratings_forreal (user_id int PRIMARY KEY, item_id int, rating int, date int)')
 
 ratings_data = np.fromfile('ratings.data', dtype=int, sep="\t")
 ratings_data = np.reshape(ratings_data, (60000,4))
 print(ratings_data)
 
+count = 0
 for rating in ratings_data:
-	session.execute(
-		"""
-		INSERT INTO movie_stuff.ratings(user_id, item_id, rating, date)
-		VALUES(%s,%s,%s,%s)
-		""",
-		(rating[0],rating[1],rating[2],rating[3])
-	)
+    count = count + 1
+
+    session.execute(
+        """
+        INSERT INTO movie_stuff.ratings_forreal(user_id, item_id, rating, date)
+        VALUES(%s,%s,%s,%s)
+        """,
+        (rating[0],rating[1],rating[2],rating[3])
+    )
+    
+    print('inserted rating #: ', count)
+
+print("Data inserted...")
 
 # Test query
-rows = session.execute('SELECT user_id, item_id, rating, date from movie_stuff.ratings')
-for row in rows:
-	print(row.user_id, row.item_id, row.rating, row.date)
+#rows = session.execute('SELECT user_id, item_id, rating, date from movie_stuff.ratings')
+#for row in rows:
+#	print(row.user_id, row.item_id, row.rating, row.date)
 
 	
 
