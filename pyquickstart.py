@@ -36,12 +36,14 @@ print("session connected")
 
 
 print("\nCreating Keyspace")
-session.execute('CREATE KEYSPACE IF NOT EXISTS movie_stuff WITH replication = {\'class\': \'NetworkTopologyStrategy\', \'datacenter\' : \'1\' }');
+session.execute('CREATE KEYSPACE IF NOT EXISTS movie_stuff WITH replication = {\'class\': \'simpleStrategy\', \'datacenter\' : \'1\' }');
+#NetowrkTopologyStrategy specifies how many replicas are wanted in each datacenter
+#simpleStrategy (use for a single datacenter and one rack) ???
 print ("\nCreating Table")
 session.execute('CREATE TABLE IF NOT EXISTS movie_stuff.ratings (user_id int PRIMARY KEY, item_id int, rating int, date int)');
 
-ratings_data = np.fromfile('ratings.dat', dtype=int, sep="\t")
-ratings_data = np.reshape(ratings_data, (100000,4))
+ratings_data = np.fromfile('ratings.data', dtype=int, sep="\t")
+ratings_data = np.reshape(ratings_data, (60000,4))
 print(ratings_data)
 
 for rating in ratings_data:
@@ -58,6 +60,7 @@ rows = session.execute('SELECT user_id, item_id, rating, date from movie_stuff.r
 for row in rows:
 	print(row.user_id, row.item_id, row.rating, row.date)
 
+	
 
 # insert_data = session.prepare("INSERT INTO  uprofile.user  (user_id, user_name , user_bcity) VALUES (?,?,?)")
 # batch = BatchStatement()
